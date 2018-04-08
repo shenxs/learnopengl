@@ -11,7 +11,7 @@ OBJ_NAME = example.out
 all: $(OBJS)
 	$(CC) $(OBJS) $(COMPILER_FLAGS) $(LINKER_FLAGS) -o $(OBJ_NAME)
 
-run: $(OBJ_NAME)
+run: $(OBJS)
 	./$(OBJ_NAME)
 
 clean:

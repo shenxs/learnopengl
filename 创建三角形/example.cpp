@@ -1,10 +1,10 @@
 #ifdef USE_GLEW
-    #include <GL/glew.h>
+#include <GL/glew.h>
 #else
-    #warning "Not using GLEW"
-    #define GL_GLEXT_PROTOTYPES
-    #include <GL/gl.h>
-    #include <GL/glext.h>
+#warning "Not using GLEW"
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GL/glext.h>
 #endif
 #include <GL/freeglut.h>
 #include <GLFW/glfw3.h>
@@ -76,30 +76,52 @@ int main(){
 
   //顶点们
   float vertices[] = {
-   -0.5f, -0.5f, 0.0f,  //left
-    0.5f, -0.5f, 0.0f,  //right
-    0.0f,  0.5f, 0.0f   //top
+    0.5f, 0.5f, 0.0f,   // 右上角
+    0.5f, -0.5f, 0.0f,  // 右下角
+    -0.5f, -0.5f, 0.0f, // 左下角
+    -0.5f, 0.5f, 0.0f   // 左上角
   };
 
-  unsigned int VBO, VAO;
+  //索引缓冲对象
+  unsigned int indices[]={
+    0,1,3,
+    1,2,3
+  };
+
+  unsigned int VBO, VAO, EBO;
+
   //生成顶点数组
   glGenVertexArrays(1,&VAO);
   //生成顶点缓冲
   glGenBuffers(1,&VBO);
+  //生成索引缓冲
+  glGenBuffers(1, &EBO);
+
 
   //绑定当前操作的顶点数组对象
   glBindVertexArray(VAO);
+
+
   //绑定当前的缓冲
   glBindBuffer(GL_ARRAY_BUFFER,VBO);
-
-
   //将数据复制到buffer中
   glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
 
+  //绑定索引缓冲对象
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  //将索引复制到buffer中
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+
   //定义常规的顶点参数数组数据
+  //指定顶点参数的位置和使用的格式
+  //数据传送的位置,与顶点着色器对应,
+  //设定顶点属性大小,三维向量,所以是3,每一个数据包含3个float
+  //数据类型,在这里是float
+  //是否标准化,标准化会被映射到-1,1之间,对于unsigned会被映射到0,1之间
+  //步长,两个数据之间的下标偏差
+  //设置第一个数据在vbo中的起始位置
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-
-
 
   glEnableVertexAttribArray(0);
 
@@ -108,7 +130,9 @@ int main(){
 
   // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
   // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-  glBindVertexArray(0);
+  // glBindVertexArray(0);
+
+
 
   //声明顶点着色器
   int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -163,7 +187,8 @@ int main(){
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    //三角形,起始点为0,绘制三个点
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glfwSwapBuffers(window);
     //检查事件触发并调用相应的函数
@@ -172,6 +197,7 @@ int main(){
 
   glDeleteVertexArrays(1,&VAO);
   glDeleteBuffers(1,&VBO);
+  glDeleteBuffers(1,&EBO);
 
   glfwDestroyWindow(window);
   glfwTerminate();
@@ -186,7 +212,7 @@ void framebuffer_size_callback(GLFWwindow* window ,int width,int height){
 }
 
 void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods){
-  if(key == GLFW_KEY_ESCAPE && action ==GLFW_PRESS){
+  if((key == GLFW_KEY_ESCAPE || key==GLFW_KEY_Q) && action ==GLFW_PRESS){
     glfwSetWindowShouldClose(window, true);
   }
 }
