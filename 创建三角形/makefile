@@ -2,7 +2,7 @@ OBJS = example.cpp
 
 CC = g++ -std=c++11
 
-COMPILER_FLAGS = -Wall
+COMPILER_FLAGS = -Wall -DUSE_GLEW
 
 LINKER_FLAGS = -lGLEW -lGL -lGLU -lglut -lglfw3 -lrt -lm -ldl -lXrandr -lXinerama -lXxf86vm -lXext -lXcursor -lXrender -lXfixes -lX11 -lpthread -lxcb -lXau -lXdmcp
 
