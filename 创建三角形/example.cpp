@@ -177,6 +177,11 @@ int main(){
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
 
+  //使用线性绘制
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  //填充
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 
   while(!glfwWindowShouldClose(window)){
 
