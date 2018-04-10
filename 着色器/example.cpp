@@ -77,6 +77,10 @@ int main(){
 
   glViewport(0, 0, 800, 600);
 
+  int nrAttributes;
+  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,&nrAttributes);
+  std::cout<<"支持的最多的顶点向量"<<nrAttributes<<std::endl;
+
 
   //顶点们
   float vertices[] = {
@@ -182,9 +186,9 @@ int main(){
   glDeleteShader(fragmentShader);
 
   //使用线性绘制
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   //填充
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 
   while(!glfwWindowShouldClose(window)){
