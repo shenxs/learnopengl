@@ -1,4 +1,4 @@
-OBJS = example.cpp
+OBJS = example.cpp Shader.cpp
 
 CC = g++ -std=c++11
 
