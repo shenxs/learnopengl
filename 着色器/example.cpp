@@ -6,10 +6,11 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #endif
+
 #include <GL/freeglut.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-
+#include <math.h>
 
 const char *vertexShaderSource = "#version 330 core\n"
   "layout (location = 0) in vec3 aPos;\n"
@@ -22,10 +23,12 @@ const char *vertexShaderSource = "#version 330 core\n"
 const char *fragmentShaderSource = "#version 330 core\n"
   "in vec4 vertexColor;\n"
   "out vec4 FragColor;\n"
+  "uniform vec4 ourcolor;\n"
   "void main()\n"
   "{\n"
   // "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-  "   FragColor = vertexColor;\n"
+  // "   FragColor = vertexColor;\n"
+  "    FragColor = ourcolor;\n"
   "}\n\0";
 
 
@@ -77,9 +80,9 @@ int main(){
 
   glViewport(0, 0, 800, 600);
 
-  int nrAttributes;
-  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,&nrAttributes);
-  std::cout<<"支持的最多的顶点向量"<<nrAttributes<<std::endl;
+  // int nrAttributes;
+  // glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,&nrAttributes);
+  // std::cout<<"支持的最多的顶点向量"<<nrAttributes<<std::endl;
 
 
   //顶点们
@@ -197,7 +200,14 @@ int main(){
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    float timevalue = glfwGetTime();
+    float greenValue= (sin(timevalue)/2.0f)+ 0.5f;
+    int vertexLocation=glGetUniformLocation(shaderProgram, "ourcolor");
+
+
+    glUniform4f(vertexLocation, 0.0f, greenValue, 0.0f, 1.0f);
     glUseProgram(shaderProgram);
+
     glBindVertexArray(VAO);
 
     //三角形,起始点为0,绘制三个点
