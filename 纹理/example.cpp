@@ -20,6 +20,8 @@ void error_callback(int error, const char *description);
 void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mods);
 
+float alpha=0.2;
+
 int main() {
 
   using namespace std;
@@ -118,10 +120,10 @@ int main() {
 
   float vertices[] = {
     //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
-    0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.1f, 0.1f,   // 右上
-    0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   0.1f, 0.0f,   // 右下
+    0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
+    0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
-   -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 0.1f    // 左上
+   -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
   };
 
   //索引缓冲对象
@@ -185,6 +187,7 @@ int main() {
   shader.use();
   shader.setInt("texture1", 0);
   shader.setInt("texture2", 1);
+  shader.setFloat("alpha", alpha);
 
   //使用线性绘制
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -196,6 +199,9 @@ int main() {
     //设定glClear使用的颜色
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+
+    shader.setFloat("alpha", alpha);
 
     shader.use();
     glBindVertexArray(VAO);
@@ -224,6 +230,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mods) {
   if ((key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q) && action == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
+  }else if(key == GLFW_KEY_UP && action == GLFW_PRESS){
+    if(alpha<=0.95){
+      alpha+=0.05;
+    }
+  }else if(key == GLFW_KEY_DOWN && action ==GLFW_PRESS ){
+    if(alpha>=0.05){
+      alpha-=0.05;
+    }
   }
 }
 
