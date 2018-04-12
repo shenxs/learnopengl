@@ -71,7 +71,7 @@ int main() {
     std::cout << "glew 初始化失败,程序结束" << std::endl;
   }
 #endif
-  glViewport(0, 0, 600, 600);
+  glViewport(0, 0, 800, 600);
 
   // int nrAttributes;
   // glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,&nrAttributes);
@@ -204,9 +204,11 @@ int main() {
 
 
   //定义变换矩阵
-  glm::mat4 trans;
+  glm::mat4 trans,anotherTrans;
   trans=glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f,0.0f,1.0f));
   trans=glm::scale(trans, glm::vec3(0.5f,0.5f,0.5f));
+
+  anotherTrans=glm::translate(anotherTrans, glm::vec3(-0.5f,0.5f,0));
 
   unsigned int transformLocation=glGetUniformLocation(shader.ID, "trans");
   glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
@@ -221,9 +223,17 @@ int main() {
 
     glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
     shader.setFloat("alpha", alpha);
-    shader.use();
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    float scalefra=sin(glfwGetTime())+2;
+    glm::mat4 final=glm::scale(anotherTrans, glm::vec3(scalefra,scalefra,0) );
+    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(final));
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+
 
     glfwSwapBuffers(window);
     //检查事件触发并调用相应的函数
