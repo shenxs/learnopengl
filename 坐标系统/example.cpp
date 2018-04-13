@@ -19,7 +19,6 @@
 #include <glm/ext.hpp>
 
 
-
 #include"Shader.h"
 #include "stb_image.h"
 
@@ -130,8 +129,8 @@ int main() {
     //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
-   -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
-   -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
+    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
   };
 
   //索引缓冲对象
@@ -204,14 +203,22 @@ int main() {
 
 
   //定义变换矩阵
-  glm::mat4 trans,anotherTrans;
-  trans=glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f,0.0f,1.0f));
-  trans=glm::scale(trans, glm::vec3(0.5f,0.5f,0.5f));
 
-  anotherTrans=glm::translate(anotherTrans, glm::vec3(-0.5f,0.5f,0));
+  //模型矩阵
+  glm::mat4 model;
+  model=glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f,0.0f,0.0f));
 
-  unsigned int transformLocation=glGetUniformLocation(shader.ID, "trans");
-  glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
+  //观察矩阵
+  glm::mat4 view;
+  view=glm::translate(view, glm::vec3(0.0f,0.0f,-3.0f));
+
+  //定义投影矩阵
+  glm::mat4 projection;
+  projection=glm::perspective(glm::radians(45.0f), 800.0f/600.0f, 0.1f, 100.0f);
+
+  shader.setMatrix4fv("model", model);
+  shader.setMatrix4fv("view", view);
+  shader.setMatrix4fv("projection", projection);
 
   while (!glfwWindowShouldClose(window)) {
 
@@ -219,18 +226,12 @@ int main() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    trans=glm::rotate(trans, (float)0.01, glm::vec3(0.0f,0.0f,1.0f));
-
-    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
     shader.setFloat("alpha", alpha);
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-    float scalefra=sin(glfwGetTime())+2;
-    glm::mat4 final=glm::scale(anotherTrans, glm::vec3(scalefra,scalefra,0) );
-    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(final));
 
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
 
 
     glfwSwapBuffers(window);
