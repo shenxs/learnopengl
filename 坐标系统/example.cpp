@@ -249,8 +249,21 @@ int main() {
   shader.setMatrix4fv("model", model);
   shader.setMatrix4fv("view", view);
   shader.setMatrix4fv("projection", projection);
-
   glEnable(GL_DEPTH_TEST);
+
+  glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f),
+    glm::vec3( 2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3( 2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f,  3.0f, -7.5f),
+    glm::vec3( 1.3f, -2.0f, -2.5f),
+    glm::vec3( 1.5f,  2.0f, -2.5f),
+    glm::vec3( 1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
+  };
+
   while (!glfwWindowShouldClose(window)) {
 
     //设定glClear使用的颜色
@@ -260,11 +273,19 @@ int main() {
     shader.setFloat("alpha", alpha);
     glBindVertexArray(VAO);
 
-    model=glm::rotate(model, glm::radians(-1.0f), glm::vec3(1.0f,1.0f,-1.0f));
-    shader.setMatrix4fv("model", model);
+    for(int i=0;i<10;i++){
+      glm::mat4 aModel;
+      aModel=glm::translate(aModel,cubePositions[i]);
+      float angle = 20.0f * i;
+      aModel=glm::rotate(aModel, glm::radians(angle), glm::vec3(1.0f,0.3f,0.5f));
+      if(i%3==0){
+        aModel=glm::rotate(aModel,(float)sin(glfwGetTime()), glm::vec3(1.0f,0.3f,0.5f));
+      }
+      shader.setMatrix4fv("model", aModel);
+      glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
 
-    glDrawArrays(GL_TRIANGLES, 0, 36);
     // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glfwSwapBuffers(window);
