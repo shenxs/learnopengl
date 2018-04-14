@@ -26,7 +26,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void error_callback(int error, const char *description);
 void key_callback(GLFWwindow *window, int key, int scancode, int action,int mods);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 float alpha=0.2;
 glm::vec3 cameraPos = glm::vec3(0.0f,0.0f,3.0f);
 
@@ -43,6 +43,7 @@ float pitch=0.0f,yaw=180.0f;
 bool firstMouse=true;
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
+float fov=45;
 
 //鼠标的焦点位置
 float lastX = 400, lastY = 300;
@@ -82,6 +83,7 @@ int main() {
   glfwSetKeyCallback(window, key_callback);
   //设置鼠标事件的回调
   glfwSetCursorPosCallback(window, mouse_callback);
+  glfwSetScrollCallback(window, scroll_callback);
 
 #ifdef USE_GLEW
   //使用实验性质，必须加上,不然会报错
@@ -266,7 +268,7 @@ int main() {
 
   //定义投影矩阵
   glm::mat4 projection;
-  projection=glm::perspective(glm::radians(45.0f), 800.0f/600.0f, 0.1f, 100.0f);
+  projection=glm::perspective(glm::radians(fov), 800.0f/600.0f, 0.1f, 100.0f);
 
   glm::vec3 cubePositions[] = {
     glm::vec3( 0.0f,  0.0f,  0.0f),
@@ -300,6 +302,9 @@ int main() {
     shader.setFloat("alpha", alpha);
     glBindVertexArray(VAO);
 
+    projection=glm::perspective(glm::radians(fov), 800.f/600.f, 0.1f, 100.0f);
+    shader.setMatrix4fv("projection", projection);
+    //更新相机view
     view=glm::lookAt(cameraPos, cameraPos+cameraFront, cameraUp);
     shader.setMatrix4fv("view", view);
 
@@ -396,4 +401,14 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
   cameraFront.z=cos(glm::radians(pitch))*cos(glm::radians(yaw));
   cameraFront.x=cos(glm::radians(pitch))*sin(glm::radians(yaw));
 
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
+  if(fov >= 1.0f && fov <= 45.0f)
+    fov -= yoffset;
+  if(fov <= 1.0f)
+    fov = 1.0f;
+  if(fov >= 45.0f)
+    fov = 45.0f;
+  std::cout<<'1'<<std::endl;
 }
