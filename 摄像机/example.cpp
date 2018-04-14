@@ -24,8 +24,8 @@
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void error_callback(int error, const char *description);
-void key_callback(GLFWwindow *window, int key, int scancode, int action,
-                  int mods);
+void key_callback(GLFWwindow *window, int key, int scancode, int action,int mods);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
 float alpha=0.2;
 glm::vec3 cameraPos = glm::vec3(0.0f,0.0f,3.0f);
@@ -38,8 +38,14 @@ glm::vec3 cameraRight=glm::normalize(glm::cross(up, cameraDirection));
 glm::vec3 cameraUp=glm::normalize(glm::cross(cameraRight, cameraDirection));
 glm::vec3 cameraFront=glm::vec3(0.0f,0.0f,-1.0f);
 
+//相机的俯仰角,偏航角
+float pitch=0.0f,yaw=180.0f;
+bool firstMouse=true;
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
+
+//鼠标的焦点位置
+float lastX = 400, lastY = 300;
 
 int main() {
 
@@ -60,8 +66,7 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   GLFWwindow *window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-  if (window ==正在处理用于 desktop-file-utils (0.22-1ubuntu5.1) 的触发器 ...
- NULL) {
+  if (window == NULL) {
     cout << "GLFW窗口创建失败" << endl;
     glfwTerminate();
     return -1;
@@ -70,10 +75,13 @@ int main() {
   //将窗口的上下文设定为当前线程的上下文
   glfwMakeContextCurrent(window);
 
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   //设置窗口大小变换的回调函数
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   //设置按键的回调函数
   glfwSetKeyCallback(window, key_callback);
+  //设置鼠标事件的回调
+  glfwSetCursorPosCallback(window, mouse_callback);
 
 #ifdef USE_GLEW
   //使用实验性质，必须加上,不然会报错
@@ -138,16 +146,16 @@ int main() {
 
   float vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
@@ -158,27 +166,27 @@ int main() {
     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
     -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
     -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
 
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
     -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-};
+  };
 
 
   //索引缓冲对象
@@ -255,7 +263,6 @@ int main() {
   glm::mat4 view;
   view=glm::translate(view, glm::vec3(0.0f,0.0f,-3.0f));
 
-  // view=glm::lookAt(cameraPos, cameraPos+cameraFront, cameraUp);
 
   //定义投影矩阵
   glm::mat4 projection;
@@ -307,7 +314,6 @@ int main() {
       shader.setMatrix4fv("model", aModel);
       glDrawArrays(GL_TRIANGLES, 0, 36);
 
-      cout<<deltaTime<<endl;
       deltaTime=glfwGetTime()-lastFrame;
 
     }
@@ -357,4 +363,37 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
 
 void error_callback(int error, const char *description) {
   fputs(description, stderr);
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos){
+
+  if(firstMouse){
+    lastX = xpos;
+    lastY = ypos;
+    firstMouse = false;
+  }
+  float xoffset=xpos-lastX;
+  float yoffset=ypos-lastY;
+
+  lastX=xpos;
+  lastY=ypos;
+
+  float sensitivity=0.5f;
+  xoffset*=sensitivity;
+  yoffset*=sensitivity;
+
+  if(pitch>89.0f){
+    pitch=89.0f;
+  }else if(pitch<-89.f){
+    pitch=-89.0f;
+  }else{
+    pitch+=yoffset;
+  }
+
+  yaw+=xoffset;
+
+  cameraFront.y=sin(glm::radians(pitch));
+  cameraFront.z=cos(glm::radians(pitch))*cos(glm::radians(yaw));
+  cameraFront.x=cos(glm::radians(pitch))*sin(glm::radians(yaw));
+
 }

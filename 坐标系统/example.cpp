@@ -28,6 +28,18 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mods);
 
 float alpha=0.2;
+glm::vec3 cameraPos = glm::vec3(0.0f,0.0f,3.0f);
+
+glm::vec3 cameraTarget=glm::vec3(0.0f,0.0f,0.0f);
+glm::vec3 cameraDirection=glm::normalize(cameraPos-cameraTarget);
+
+glm::vec3 up =glm::vec3(0.0f,1.0f,0.0f);
+glm::vec3 cameraRight=glm::normalize(glm::cross(up, cameraDirection));
+glm::vec3 cameraUp=glm::normalize(glm::cross(cameraRight, cameraDirection));
+glm::vec3 cameraFront=glm::vec3(0.0f,0.0f,-1.0f);
+
+float deltaTime = 0.0f; // 当前帧与上一帧的时间差
+float lastFrame = 0.0f; // 上一帧的时间
 
 int main() {
 
@@ -48,7 +60,8 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   GLFWwindow *window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
-  if (window == NULL) {
+  if (window ==正在处理用于 desktop-file-utils (0.22-1ubuntu5.1) 的触发器 ...
+ NULL) {
     cout << "GLFW窗口创建失败" << endl;
     glfwTerminate();
     return -1;
@@ -242,6 +255,8 @@ int main() {
   glm::mat4 view;
   view=glm::translate(view, glm::vec3(0.0f,0.0f,-3.0f));
 
+  // view=glm::lookAt(cameraPos, cameraPos+cameraFront, cameraUp);
+
   //定义投影矩阵
   glm::mat4 projection;
   projection=glm::perspective(glm::radians(45.0f), 800.0f/600.0f, 0.1f, 100.0f);
@@ -259,23 +274,18 @@ int main() {
     glm::vec3(-1.3f,  1.0f, -1.5f)
   };
 
-  glm::vec3 cameraPos = glm::vec3(0.0f,0.0f,3.0f);
-  glm::vec3 cameraTarget=glm::vec3(0.0f,0.0f,0.0f);
-  glm::vec3 cameraDirection=glm::normalize(cameraPos-cameraTarget);
-
-  glm::vec3 up =glm::vec3(0.0f,0.0f,1.0f);
-  glm::vec3 cameraRight=glm::normalize(glm::cross(up, cameraDirection));
-  glm::vec3 cameraUp=glm::normalize(glm::cross(cameraRight, cameraDirection));
-
-  // view = glm::lookAt(cameraPos, glm::vec3(0.0f,0.0f,0.0f), cameraUp);
-
   shader.setMatrix4fv("model", model);
   shader.setMatrix4fv("view", view);
   shader.setMatrix4fv("projection", projection);
   glEnable(GL_DEPTH_TEST);
 
+
+  //设定上次的时间
+  lastFrame=glfwGetTime();
+
   while (!glfwWindowShouldClose(window)) {
 
+    lastFrame=glfwGetTime();
     //设定glClear使用的颜色
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -283,10 +293,7 @@ int main() {
     shader.setFloat("alpha", alpha);
     glBindVertexArray(VAO);
 
-    float radius = 10.0f;
-    float camX = sin(glfwGetTime()) * radius;
-    float camZ = cos(glfwGetTime()) * radius;
-    view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+    view=glm::lookAt(cameraPos, cameraPos+cameraFront, cameraUp);
     shader.setMatrix4fv("view", view);
 
     for(int i=0;i<10;i++){
@@ -299,6 +306,10 @@ int main() {
       }
       shader.setMatrix4fv("model", aModel);
       glDrawArrays(GL_TRIANGLES, 0, 36);
+
+      cout<<deltaTime<<endl;
+      deltaTime=glfwGetTime()-lastFrame;
+
     }
 
     glfwSwapBuffers(window);
@@ -333,6 +344,15 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
       alpha-=0.05;
     }
   }
+  float cameraSpeed=2.5f * deltaTime;
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    cameraPos += cameraSpeed * cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    cameraPos -= cameraSpeed * cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
 void error_callback(int error, const char *description) {
