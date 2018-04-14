@@ -1,4 +1,4 @@
-OBJS = example.cpp Shader.cpp stb_image.cpp
+OBJS = example.cpp Shader.cpp stb_image.cpp Camera.cpp
 
 CC = g++ -std=c++11
 

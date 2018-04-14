@@ -13,37 +13,33 @@
 #include <math.h>
 
 //矩阵运算
+#include <glm/ext.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/ext.hpp>
 
-
-#include"Shader.h"
+#include "Camera.h"
+#include "Shader.h"
 #include "stb_image.h"
+
+//常数设定
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+Camera camera(glm::vec3(0.0f,0.0f,3.0f),glm::vec3(0.0f,1.0f,0.0f),180);
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void error_callback(int error, const char *description);
 void key_callback(GLFWwindow *window, int key, int scancode, int action,int mods);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-float alpha=0.2;
-glm::vec3 cameraPos = glm::vec3(0.0f,0.0f,3.0f);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
+float alpha = 0.2;
 
-glm::vec3 cameraTarget=glm::vec3(0.0f,0.0f,0.0f);
-glm::vec3 cameraDirection=glm::normalize(cameraPos-cameraTarget);
 
-glm::vec3 up =glm::vec3(0.0f,1.0f,0.0f);
-glm::vec3 cameraRight=glm::normalize(glm::cross(up, cameraDirection));
-glm::vec3 cameraUp=glm::normalize(glm::cross(cameraRight, cameraDirection));
-glm::vec3 cameraFront=glm::vec3(0.0f,0.0f,-1.0f);
 
-//相机的俯仰角,偏航角
-float pitch=0.0f,yaw=180.0f;
-bool firstMouse=true;
+bool firstMouse = true;
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
-float fov=45;
 
 //鼠标的焦点位置
 float lastX = 400, lastY = 300;
@@ -95,13 +91,8 @@ int main() {
 #endif
   glViewport(0, 0, 800, 600);
 
-  // int nrAttributes;
-  // glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,&nrAttributes);
-  // std::cout<<"支持的最多的顶点向量"<<nrAttributes<<std::endl;
-
   //生成纹理
-
-  unsigned int texture1,texture2;
+  unsigned int texture1, texture2;
   glGenTextures(1, &texture1);
   glGenTextures(1, &texture2);
   glActiveTexture(GL_TEXTURE0);
@@ -113,15 +104,17 @@ int main() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   //加载纹理贴图
-  int width,height,nrChannels;
-  unsigned char* data=stbi_load("./container.jpg", &width, &height, &nrChannels, 0);
-  if(data){
+  int width, height, nrChannels;
+  unsigned char *data =
+      stbi_load("./container.jpg", &width, &height, &nrChannels, 0);
+  if (data) {
     //传输纹理数据
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, data);
     //产生多级纹理
     glGenerateMipmap(GL_TEXTURE_2D);
-  }else{
-    cout<<"纹理加载失败"<<endl;
+  } else {
+    cout << "纹理加载失败" << endl;
   }
   stbi_image_free(data);
 
@@ -134,62 +127,42 @@ int main() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   stbi_set_flip_vertically_on_load(true);
-  data=stbi_load("./awesomeface.png", &width, &height, &nrChannels, 0);
-  if(data){
+  data = stbi_load("./awesomeface.png", &width, &height, &nrChannels, 0);
+  if (data) {
     //传输纹理数据
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, data);
     //产生多级纹理
     glGenerateMipmap(GL_TEXTURE_2D);
-  }else{
-    cout<<"纹理加载失败"<<endl;
+  } else {
+    cout << "纹理加载失败" << endl;
   }
   stbi_image_free(data);
 
-
   float vertices[] = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-    0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
 
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
 
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
+      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
 
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-  };
-
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
 
   //索引缓冲对象
   unsigned int indices[] = {0, 1, 3, 1, 2, 3};
@@ -229,7 +202,8 @@ int main() {
   glEnableVertexAttribArray(0);
 
   //纹理位置参数
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                        (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(2);
 
   // note that this is allowed, the call to glVertexAttribPointer registered VBO
@@ -243,84 +217,56 @@ int main() {
   // unbind VAOs (nor VBOs) when it's not directly necessary.
   // glBindVertexArray(0);
 
-  Shader shader("./shader.vert","./shader.frag");
+  Shader shader("./shader.vert", "./shader.frag");
   shader.use();
   shader.setInt("texture1", 0);
   shader.setInt("texture2", 1);
-  shader.setFloat("alpha", alpha);
-
-  //使用线性绘制
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  //填充
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 
   //定义变换矩阵
-
-  //模型矩阵
-  glm::mat4 model;
-  model=glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f,0.0f,0.0f));
-
-  //观察矩阵
-  glm::mat4 view;
-  view=glm::translate(view, glm::vec3(0.0f,0.0f,-3.0f));
-
-
-  //定义投影矩阵
-  glm::mat4 projection;
-  projection=glm::perspective(glm::radians(fov), 800.0f/600.0f, 0.1f, 100.0f);
+  glm::mat4 model,view,projection;
 
   glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f),
-    glm::vec3( 2.0f,  5.0f, -15.0f),
-    glm::vec3(-1.5f, -2.2f, -2.5f),
-    glm::vec3(-3.8f, -2.0f, -12.3f),
-    glm::vec3( 2.4f, -0.4f, -3.5f),
-    glm::vec3(-1.7f,  3.0f, -7.5f),
-    glm::vec3( 1.3f, -2.0f, -2.5f),
-    glm::vec3( 1.5f,  2.0f, -2.5f),
-    glm::vec3( 1.5f,  0.2f, -1.5f),
-    glm::vec3(-1.3f,  1.0f, -1.5f)
-  };
+      glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+      glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+      glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+      glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+      glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
 
-  shader.setMatrix4fv("model", model);
-  shader.setMatrix4fv("view", view);
-  shader.setMatrix4fv("projection", projection);
   glEnable(GL_DEPTH_TEST);
 
-
   //设定上次的时间
-  lastFrame=glfwGetTime();
+  lastFrame = glfwGetTime();
 
   while (!glfwWindowShouldClose(window)) {
 
-    lastFrame=glfwGetTime();
+    lastFrame = glfwGetTime();
     //设定glClear使用的颜色
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shader.setFloat("alpha", alpha);
     glBindVertexArray(VAO);
 
-    projection=glm::perspective(glm::radians(fov), 800.f/600.f, 0.1f, 100.0f);
+    projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH/(float)SCR_HEIGHT , 0.1f, 100.0f);
+    view = camera.getViewMatrix();
+
+    shader.setFloat("alpha", alpha);
     shader.setMatrix4fv("projection", projection);
-    //更新相机view
-    view=glm::lookAt(cameraPos, cameraPos+cameraFront, cameraUp);
     shader.setMatrix4fv("view", view);
 
-    for(int i=0;i<10;i++){
+    for (int i = 0; i < 10; i++) {
       glm::mat4 aModel;
-      aModel=glm::translate(aModel,cubePositions[i]);
+      aModel = glm::translate(aModel, cubePositions[i]);
       float angle = 10.0f * i;
-      aModel=glm::rotate(aModel, glm::radians(angle), glm::vec3(1.0f,0.3f,0.5f));
-      if(i%3==0){
-        aModel=glm::rotate(aModel,(float)sin(glfwGetTime()), glm::vec3(1.0f,0.3f,0.5f));
+      aModel =
+          glm::rotate(aModel, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+      if (i % 3 == 0) {
+        aModel = glm::rotate(aModel, (float)sin(glfwGetTime()),
+                             glm::vec3(1.0f, 0.3f, 0.5f));
       }
       shader.setMatrix4fv("model", aModel);
       glDrawArrays(GL_TRIANGLES, 0, 36);
 
-      deltaTime=glfwGetTime()-lastFrame;
-
+      deltaTime = glfwGetTime() - lastFrame;
     }
 
     glfwSwapBuffers(window);
@@ -346,69 +292,43 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action,
                   int mods) {
   if ((key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q) && action == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
-  }else if(key == GLFW_KEY_UP && action == GLFW_PRESS){
-    if(alpha<=0.95){
-      alpha+=0.05;
+  } else if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+    if (alpha <= 0.95) {
+      alpha += 0.05;
     }
-  }else if(key == GLFW_KEY_DOWN && action ==GLFW_PRESS ){
-    if(alpha>=0.05){
-      alpha-=0.05;
+  } else if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+    if (alpha >= 0.05) {
+      alpha -= 0.05;
     }
   }
-  float cameraSpeed=2.5f * deltaTime;
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    cameraPos += cameraSpeed * cameraFront;
+    camera.ProcessKeyBoard(FORWARD,deltaTime);
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    cameraPos -= cameraSpeed * cameraFront;
+    camera.ProcessKeyBoard(BACKWARD,deltaTime);
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    camera.ProcessKeyBoard(LEFT,deltaTime);
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    camera.ProcessKeyBoard(RIGHT,deltaTime);
 }
 
 void error_callback(int error, const char *description) {
   fputs(description, stderr);
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos){
-
-  if(firstMouse){
-    lastX = xpos;
-    lastY = ypos;
-    firstMouse = false;
-  }
-  float xoffset=xpos-lastX;
-  float yoffset=ypos-lastY;
-
-  lastX=xpos;
-  lastY=ypos;
-
-  float sensitivity=0.5f;
-  xoffset*=sensitivity;
-  yoffset*=sensitivity;
-
-  if(pitch>89.0f){
-    pitch=89.0f;
-  }else if(pitch<-89.f){
-    pitch=-89.0f;
-  }else{
-    pitch+=yoffset;
-  }
-
-  yaw+=xoffset;
-
-  cameraFront.y=sin(glm::radians(pitch));
-  cameraFront.z=cos(glm::radians(pitch))*cos(glm::radians(yaw));
-  cameraFront.x=cos(glm::radians(pitch))*sin(glm::radians(yaw));
-
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+  if (firstMouse)
+    {
+      lastX = xpos;
+      lastY = ypos;
+      firstMouse = false;
+    }
+  float xoffset = xpos - lastX;
+  float yoffset = ypos - lastY;
+  lastX = xpos;
+  lastY = ypos;
+  camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
-  if(fov >= 1.0f && fov <= 45.0f)
-    fov -= yoffset;
-  if(fov <= 1.0f)
-    fov = 1.0f;
-  if(fov >= 45.0f)
-    fov = 45.0f;
-  std::cout<<'1'<<std::endl;
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset){
+  camera.ProcessMouseScroll(yoffset);
 }
